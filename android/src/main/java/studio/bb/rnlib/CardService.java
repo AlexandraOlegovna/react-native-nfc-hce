@@ -10,22 +10,23 @@ public class CardService extends HostApduService {
 
     private static final String TAG = "CardService";
 
-    private static final String AID = "F201808175";
-
     private static final String SELECT_APDU_HEADER = "00A40400";
     private static final byte[] SELECT_OK_SW = HexStringToByteArray("9000");
     private static final byte[] UNKNOWN_CMD_SW = HexStringToByteArray("0000");
-    private static final byte[] SELECT_APDU = BuildSelectApdu(AID);
 
 
     @Override
     public byte[] processCommandApdu(byte[] commandApdu, Bundle extras) {
         Log.i(TAG, "Received APDU: " + ByteArrayToHexString(commandApdu));
-        if (Arrays.equals(SELECT_APDU, commandApdu)) {
+        // you can also check AID here
+        // use if (Arrays.equals(BuildSelectApdu(AID), commandApdu));
+        if (Arrays.equals(
+                Arrays.copyOfRange(HexStringToByteArray(SELECT_APDU_HEADER), 0, 4),
+                Arrays.copyOfRange(commandApdu, 0, 4))) {
             String data = IDWarehouse.GetID(this.getApplicationContext());
             byte[] accountBytes = data.getBytes();
-            Log.i(TAG, "Sending account number: " + data);
-            return ConcatArrays(accountBytes, SELECT_OK_SW);
+            Log.i(TAG, "Sending account number: " + accountBytes);
+            return accountBytes;
         } else {
             return UNKNOWN_CMD_SW;
         }
